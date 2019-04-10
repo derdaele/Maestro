@@ -3,43 +3,44 @@ package main
 import (
 	"fmt"
 	"os"
-	"path/filepath"
 
 	"github.com/dhowden/tag"
+
+	"github.com/derdaele/maestro/internal/filesystem"
 )
 
+func getTags(filepath string) (tag.Metadata, error) {
+	file, err := os.Open(filepath)
+
+	if err != nil {
+		return nil, err
+	}
+
+	defer file.Close()
+
+	m, err := tag.ReadFrom(file)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return m, nil
+}
+
 func main() {
-	wd, _ := os.Getwd()
+	if len(os.Args) != 2 {
+		fmt.Println("Usage:", os.Args[0], "<classical music directory>")
+		os.Exit(1)
+	}
 
-	filepath.Walk(".",
-		func(path string, info os.FileInfo, err error) error {
-			if err != nil {
-				return err
-			}
+	for musicFilePath := range filesystem.ListMusicFiles(os.Args[1]) {
+		m, err := getTags(musicFilePath)
 
-			if info.IsDir() {
-				return nil
-			}
+		if err != nil {
+			fmt.Println("Error", err)
+			continue
+		}
 
-			file, err := os.Open(path)
-
-			if err != nil {
-				fmt.Println(err)
-			}
-
-			defer file.Close()
-
-			m, err := tag.ReadFrom(file)
-
-			if err != nil {
-				fmt.Println(err)
-				return nil
-			}
-
-			fmt.Println(m.Title())
-
-			return nil
-		})
-
-	fmt.Println("Hello World! from", wd)
+		fmt.Println(m.Title())
+	}
 }

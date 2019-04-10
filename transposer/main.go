@@ -4,38 +4,10 @@ import (
 	"fmt"
 	"os"
 	"path"
-	"path/filepath"
 	"strings"
 
-	"github.com/xfrr/goffmpeg/transcoder"
+	"github.com/derdaele/maestro/internal/filesystem"
 )
-
-func isMusicFile(info os.FileInfo) bool {
-	switch path.Ext(info.Name()) {
-	case ".wma":
-		return true
-	default:
-		return false
-	}
-}
-
-func transcode(from string, to string) {
-	trans := new(transcoder.Transcoder)
-
-	err := trans.Initialize(from, to)
-
-	if err != nil {
-		fmt.Println("Count not transcode file", err)
-	}
-
-	trans.MediaFile().SetAudioBitRate(320)
-	done := trans.Run(false)
-	err = <-done
-
-	if err != nil {
-		fmt.Println("Could not transcode file", err)
-	}
-}
 
 func main() {
 	if len(os.Args) != 3 {
@@ -43,28 +15,31 @@ func main() {
 		os.Exit(1)
 	}
 
-	inputDirectory := os.Args[1]
-	outputDirectory := os.Args[2]
+	inputDir := os.Args[1]
+	outputDir := os.Args[2]
+	transcode, errChan := startTranscoder(4)
 
-	filepath.Walk(inputDirectory, func(filepath string, info os.FileInfo, err error) error {
-		if err != nil {
-			return err
-		}
+	for inputFile := range filesystem.ListMusicFiles(inputDir) {
+		var outputFile string
 
-		if !isMusicFile(info) {
-			return nil
-		}
+		// Relative path
+		outputFile = strings.TrimPrefix(inputFile, inputDir)
 
-		relativeFilepath := strings.TrimPrefix(filepath, inputDirectory)
-		relativeFilepath = strings.TrimSuffix(relativeFilepath, path.Ext(relativeFilepath))
-		relativeFilepath = relativeFilepath + ".mp3"
-		outputFilepath := path.Join(outputDirectory, relativeFilepath)
-		dir := path.Dir(outputFilepath)
-		os.MkdirAll(dir, os.ModePerm)
+		// We change the file extension to mp3
+		outputFile = strings.TrimSuffix(outputFile, path.Ext(inputFile)) + ".mp3"
 
-		fmt.Println("Transcoding from", filepath, "to", outputFilepath)
-		transcode(filepath, outputFilepath)
+		// We set the absolute path relative to the output directory
+		outputFile = path.Join(outputDir, outputFile)
 
-		return nil
-	})
+		os.MkdirAll(path.Dir(outputFile), os.ModePerm)
+
+		transcode <- transcodeRequest{inputFile: inputFile, outputFile: outputFile}
+	}
+	close(transcode)
+
+	err := <-errChan
+
+	if err != nil {
+		fmt.Println("Error", err)
+	}
 }

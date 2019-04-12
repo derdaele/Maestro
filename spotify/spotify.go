@@ -1,8 +1,12 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"net/http"
+	"net/url"
+	"strconv"
 )
 
 // Image represent an image url with its size.
@@ -37,36 +41,43 @@ type getAlbumRangeResponse struct {
 	Items []Album `json:"items"`
 }
 
-func get(URL string, bearerToken string) (*http.Response, error) {
-	req, err := http.NewRequest("GET", URL, nil)
+func get(URL *url.URL, bearerToken string, result interface{}) error {
+	req, err := http.NewRequest("GET", URL.String(), nil)
 	if err != nil {
-		panic(err)
+		return err
 	}
 
 	req.Header.Set("Authorization", fmt.Sprint("Bearer ", bearerToken))
 	req.Header.Set("Accept", "application/json")
 	req.Header.Set("Content-Type", "application/json")
 
-	return http.DefaultClient.Do(req)
-}
-
-func getAlbumRange(authToken string, artistID string, offset int, limit int) getAlbumRangeResponse {
-	res, err := get(fmt.Sprintf("https://api.spotify.com/v1/artists/%s/albums?offset=%d&limit=%d&include_groups=album,single,compilation,appears_on&market=FR",
-	artistID, offset, limit))
+	res, err := http.DefaultClient.Do(req)
 
 	if err != nil {
-		panic(err)
+		return err
 	}
-
-	var response getAlbumRangeResponse
 
 	payload, err := ioutil.ReadAll(res.Body)
 
 	if err != nil {
-		panic(err)
+		return err
 	}
 
-	err = json.Unmarshal(payload, &response)
+	return json.Unmarshal(payload, result)
+}
+
+func getAlbumRange(authToken string, artistID string, offset int, limit int) getAlbumRangeResponse {
+	url, _ := url.Parse(fmt.Sprintf("https://api.spotify.com/v1/artists/%s/albums", artistID))
+
+	query := url.Query()
+	query.Set("offset", strconv.Itoa(offset))
+	query.Set("limit", strconv.Itoa(limit))
+	query.Set("include_groups", "album,single,compilation,appears_on")
+	query.Set("market", "FR")
+	url.RawQuery = query.Encode()
+
+	var response getAlbumRangeResponse
+	err := get(url, authToken, &response)
 
 	if err != nil {
 		panic(err)
@@ -78,5 +89,5 @@ func getAlbumRange(authToken string, artistID string, offset int, limit int) get
 func getAlbums(authToken string, artistID string) chan Album {
 	res := make(chan Album)
 
-	get(fmt.Sprintf("https://api.spotify.com/v1/artists/%s/albums?offset=1&limit=1&include_groups=album,single,compilation,appears_on&market=FR")
+	return res
 }

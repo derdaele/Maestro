@@ -1,13 +1,16 @@
 package main
 
-import "fmt"
-
-const (
-	clientID     = "6456ae94a67f49ba9307a3618415f44a"
-	clientSecret = ""
+import (
+	"fmt"
+	"os"
 )
 
 func main() {
-	token := getBearerToken(clientID, clientSecret)
-	fmt.Println(token)
+	token := getBearerToken(os.Getenv("CLIENT_ID"), os.Getenv("CLIENT_SECRET"))
+
+	albumRange := getAlbumRange(token, "2wOqMjp9TyABvtHdOSOTUS", 0, 50)
+
+	for _, album := range albumRange.Items {
+		fmt.Println(album.Name, album.TotalTracks)
+	}
 }

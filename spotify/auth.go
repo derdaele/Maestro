@@ -18,6 +18,7 @@ type authResponse struct {
 }
 
 func getBearerToken(clientID string, clientSecret string) string {
+	// TODO: Fail on auth failed!
 	basicAuth := base64.StdEncoding.EncodeToString([]byte(clientID + ":" + clientSecret))
 	formData := url.Values{"grant_type": {"client_credentials"}}
 

@@ -1,7 +1,6 @@
 package spotify
 
 import (
-	"errors"
 	"fmt"
 	"net/url"
 	"strconv"
@@ -12,25 +11,29 @@ import (
 type GetArtistAlbumRangeResponse struct {
 	Href     string  `json:"href"`
 	Items    []Album `json:"items"`
-	Next     string  `json:"next"`
+	Next     *string `json:"next"`
 	Limit    int     `json:"limit"`
 	Offset   int     `json:"offset"`
-	Previous string  `json:"previous"`
+	Previous *string `json:"previous"`
 	Total    int     `json:"total"`
 }
 
 // GetArtistAlbumRange retrieve a range of albums for a given artist
-func (c Client) GetArtistAlbumRange(artistID string, offset int, limit int) (*GetArtistAlbumRangeResponse, error) {
+func (c Client) GetArtistAlbumRange(artistID string, offset *int, limit *int) (*GetArtistAlbumRangeResponse, error) {
 	url, _ := url.Parse(fmt.Sprintf("%s/artists/%s/albums", baseEndpoint, artistID))
 	query := url.Query()
-	query.Set("offset", strconv.Itoa(offset))
-	query.Set("limit", strconv.Itoa(limit))
+	if offset != nil {
+		query.Set("offset", strconv.Itoa(*offset))
+	}
+	if limit != nil {
+		query.Set("limit", strconv.Itoa(*limit))
+	}
 	query.Set("include_groups", "album,single,compilation,appears_on")
 	query.Set("market", c.Market)
 	url.RawQuery = query.Encode()
 
 	var response GetArtistAlbumRangeResponse
-	err := c.Get(url, &response)
+	err := c.Get(url.String(), &response)
 	if err != nil {
 		return nil, err
 	}
@@ -39,8 +42,8 @@ func (c Client) GetArtistAlbumRange(artistID string, offset int, limit int) (*Ge
 
 // GetAlbums retrieve album data, tracks included, for a batch of album ids
 func (c Client) GetAlbums(ids []string) (*GetAlbums, error) {
-	if len(ids) > maxRequestAlbumCount {
-		return nil, errors.New(fmt.Sprintf("Too many album provided: %d (maximum is %d)", len(ids), maxRequestAlbumCount))
+	if len(ids) > MaxRequestAlbumCount {
+		return nil, fmt.Errorf("Too many album provided: %d (maximum is %d)", len(ids), MaxRequestAlbumCount)
 	}
 
 	url, _ := url.Parse(fmt.Sprintf("%s/albums", baseEndpoint))
@@ -50,7 +53,7 @@ func (c Client) GetAlbums(ids []string) (*GetAlbums, error) {
 	url.RawQuery = query.Encode()
 
 	var response GetAlbums
-	err := c.Get(url, &response)
+	err := c.Get(url.String(), &response)
 	if err != nil {
 		return nil, err
 	}

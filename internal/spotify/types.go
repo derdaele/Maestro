@@ -18,10 +18,10 @@ type Artist struct {
 type GetAlbumTracksRange struct {
 	Href     string  `json:"href"`
 	Items    []Track `json:"items"`
-	Next     string  `json:"next"`
+	Next     *string `json:"next"`
 	Limit    int     `json:"limit"`
 	Offset   int     `json:"offset"`
-	Previous string  `json:"previous"`
+	Previous *string `json:"previous"`
 	Total    int     `json:"total"`
 }
 

@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
-	"net/url"
 	"strconv"
 	"time"
 )
@@ -45,8 +44,8 @@ func (c Client) Request(req *http.Request, result interface{}) error {
 }
 
 // Get perform a GET http request on the URL and extract the json body result
-func (c Client) Get(URL *url.URL, result interface{}) error {
-	req, err := http.NewRequest("GET", URL.String(), nil)
+func (c Client) Get(URL string, result interface{}) error {
+	req, err := http.NewRequest("GET", URL, nil)
 
 	if err != nil {
 		return err

@@ -15,6 +15,6 @@ func main() {
 	res, _ := client.GetArtistAlbumRange(beethoven, 50, 50)
 
 	for _, album := range res.Items {
-		fmt.Println(album.Name, album.TotalTracks)
+		fmt.Println(album.ID, album.Name, album.TotalTracks)
 	}
 }

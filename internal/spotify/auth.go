@@ -82,7 +82,7 @@ func getClientCredentialToken(clientID string, clientSecret string) (*authSucces
 }
 
 // GetToken retrieve the current cached token if not expired, retrieve one if needed
-func (cc ClientCredentials) getToken() string {
+func (cc *ClientCredentials) getToken() string {
 	if cc.expiration.Before(time.Now().Add(time.Minute)) {
 		authSuccess, err := getClientCredentialToken(cc.ClientID, cc.ClientSecret)
 
@@ -98,8 +98,8 @@ func (cc ClientCredentials) getToken() string {
 }
 
 // NewClientCredentials initialize a new client credential auth provider from a client id and secret.
-func NewClientCredentials(clientID string, clientSecret string) ClientCredentials {
-	return ClientCredentials{
+func NewClientCredentials(clientID string, clientSecret string) *ClientCredentials {
+	return &ClientCredentials{
 		ClientID:     clientID,
 		ClientSecret: clientSecret,
 		cachedToken:  "",

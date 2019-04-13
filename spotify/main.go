@@ -3,14 +3,18 @@ package main
 import (
 	"fmt"
 	"os"
+
+	"github.com/derdaele/maestro/internal/spotify"
 )
 
 func main() {
-	token := getBearerToken(os.Getenv("CLIENT_ID"), os.Getenv("CLIENT_SECRET"))
+	credentials := spotify.NewClientCredentials(os.Getenv("CLIENT_ID"), os.Getenv("CLIENT_SECRET"))
+	client := spotify.NewClient(credentials)
 
-	albumRange := getAlbumRange(token, "2wOqMjp9TyABvtHdOSOTUS", 0, 50)
+	beethoven := "2wOqMjp9TyABvtHdOSOTUS"
+	res, _ := client.GetArtistAlbumRange(beethoven, 50, 50)
 
-	for _, album := range albumRange.Items {
+	for _, album := range res.Items {
 		fmt.Println(album.Name, album.TotalTracks)
 	}
 }

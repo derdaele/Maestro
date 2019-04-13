@@ -38,6 +38,7 @@ type Album struct {
 	ReleaseDatePrecision string               `json:"release_date_precision"`
 	TotalTracks          int                  `json:"total_tracks"`
 	Tracks               *GetAlbumTracksRange `json:"tracks"`
+	Label                *string              `json:"label"`
 }
 
 // Track represent a music file

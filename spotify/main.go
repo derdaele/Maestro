@@ -7,7 +7,12 @@ import (
 	"github.com/derdaele/maestro/internal/spotify"
 )
 
-func getAlbumTracks(client spotify.Client, album *spotify.Album, out chan spotify.Track) error {
+type Entry struct {
+	track *spotify.Track
+	album *spotify.Album
+}
+
+func getAlbumTracks(client spotify.Client, album *spotify.Album, out chan Entry) error {
 	current := album.Tracks
 	var err error
 
@@ -17,7 +22,7 @@ func getAlbumTracks(client spotify.Client, album *spotify.Album, out chan spotif
 		}
 
 		for _, track := range current.Items {
-			out <- track
+			out <- Entry{track: &track, album: album}
 		}
 
 		if current.Next != nil {
@@ -30,8 +35,8 @@ func getAlbumTracks(client spotify.Client, album *spotify.Album, out chan spotif
 	return nil
 }
 
-func getArtistTracks(client spotify.Client, artistID string) chan spotify.Track {
-	res := make(chan spotify.Track)
+func getArtistTracks(client spotify.Client, artistID string) chan Entry {
+	res := make(chan Entry)
 
 	go func() {
 		current, err := client.GetArtistAlbumRange(artistID, nil, nil)
@@ -45,6 +50,7 @@ func getArtistTracks(client spotify.Client, artistID string) chan spotify.Track 
 				ids[idx] = album.ID
 			}
 
+			// We make small batch of albums to get their tracks
 			for batch := 0; batch < len(ids)/spotify.MaxRequestAlbumCount; batch++ {
 				low, high := batch*spotify.MaxRequestAlbumCount, (batch+1)*spotify.MaxRequestAlbumCount
 				albums, _ := client.GetAlbums(ids[low:high])
@@ -72,12 +78,9 @@ func main() {
 	client := spotify.NewClient(credentials, "FR")
 
 	beethoven := "2wOqMjp9TyABvtHdOSOTUS"
-	tracks := getArtistTracks(client, beethoven)
-	count := 0
+	entries := getArtistTracks(client, beethoven)
 
-	for range tracks {
-		count++
+	for entry := range entries {
+		fmt.Println(entry.track.ID, entry.track.Name)
 	}
-
-	fmt.Println("Total tracks = ", count)
 }

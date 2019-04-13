@@ -9,12 +9,24 @@ import (
 
 func main() {
 	credentials := spotify.NewClientCredentials(os.Getenv("CLIENT_ID"), os.Getenv("CLIENT_SECRET"))
-	client := spotify.NewClient(credentials)
+	client := spotify.NewClient(credentials, "FR")
 
 	beethoven := "2wOqMjp9TyABvtHdOSOTUS"
-	res, _ := client.GetArtistAlbumRange(beethoven, 50, 50)
+	res, _ := client.GetArtistAlbumRange(beethoven, 0, 50)
 
-	for _, album := range res.Items {
-		fmt.Println(album.ID, album.Name, album.TotalTracks)
+	ids := make([]string, 50)
+	for idx, album := range res.Items {
+		ids[idx] = album.ID
+	}
+
+	albums, _ := client.GetAlbums(ids[0:20])
+	for _, album := range albums.Albums {
+		if album.Tracks == nil {
+			continue
+		}
+
+		for _, track := range album.Tracks.Items {
+			fmt.Println(track.ID, track.Name)
+		}
 	}
 }

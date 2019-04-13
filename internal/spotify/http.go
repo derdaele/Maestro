@@ -8,7 +8,8 @@ import (
 	"net/url"
 )
 
-func (c Client) request(req *http.Request, result interface{}) error {
+// Request perform an HTTP request and parse the JSON body
+func (c Client) Request(req *http.Request, result interface{}) error {
 	req.Header.Set("Authorization", fmt.Sprint("Bearer ", c.Auth.getToken()))
 	req.Header.Set("Accept", "application/json")
 	req.Header.Set("Content-Type", "application/json")
@@ -28,12 +29,13 @@ func (c Client) request(req *http.Request, result interface{}) error {
 	return json.Unmarshal(payload, result)
 }
 
-func (c Client) get(URL *url.URL, result interface{}) error {
+// Get perform a GET http request on the URL and extract the json body result
+func (c Client) Get(URL *url.URL, result interface{}) error {
 	req, err := http.NewRequest("GET", URL.String(), nil)
 
 	if err != nil {
 		return err
 	}
 
-	return c.request(req, result)
+	return c.Request(req, result)
 }
